@@ -1,0 +1,9 @@
+
+# build binary
+api
+
+# Files to tinker with
+tester*
+
+# Saved fetches
+*.json
