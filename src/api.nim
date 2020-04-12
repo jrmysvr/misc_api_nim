@@ -1,6 +1,7 @@
 import jester
 import times
 import httpClient
+import htmlgen
 import strutils
 import json
 import streams
@@ -24,27 +25,70 @@ proc saveJson(fileName: string, obj: JsonNode) =
   strm.writeLine(obj)
   strm.close()
 
+proc openJson(fileName: string) : JsonNode =
+  var strm = newFileStream(fileName, fmRead)
+  result = parseJson(strm)
+  strm.close()
+
+
 # APOD endpoint
 const dateFormat = "yyyy-MM-dd"
 var
   apodURL = ""
   fetchDate = now() - 1.years
+  fnameToday = ""
+
+proc fetchAPOD() : string =
+  ## Fetch the Astronomy Picture of the Day url
+
+  let
+    today = parse(now().format(dateFormat), dateFormat)
+    fetched = today == fetchDate
+
+  if not fetched:
+    fetchDate = today
+    let
+      jsonResp = getAPOD()
+      fileName = "APOD_$1.json".format(jsonResp["date"]
+                                       .getStr()
+                                       .strip(chars = {'\"'}))
+
+    fnameToday = fileName
+
+    saveJson(fnameToday, jsonResp)
+    result = jsonResp["hdurl"].getStr()
+
+  else:
+    result = apodURL
+
+proc getAPODexplanation() : string =
+  ## Get the explanation text of the Astronomy Picture of the Day
+
+  let
+    today = parse(now().format(dateFormat), dateFormat)
+    fetched = today == fetchDate
+
+  if not fetched:
+    discard fetchAPOD()
+
+  result = openJson(fnameToday)["explanation"].getStr()
+
+proc apodPage() : string =
+  let
+    url = fetchAPOD()
+    explanation = getAPODexplanation()
+
+  result = html(title("Astronomy Picture of the Day"),
+                body(
+                  img(src = url,
+                      alt = explanation,
+                      style = "display: block; margin-left: auto; margin-right: auto;",
+                  ),
+                  p(explanation),
+                )
+          )
 
 routes:
   get "/api/apod":
-    let
-      today = parse(now().format(dateFormat), dateFormat)
-      fetched = today == fetchDate
-    if not fetched:
-      fetchDate = today
-      let
-        jsonResp = getAPOD()
-        fileName = "APOD_$1.json".format(jsonResp["date"]
-                                         .getStr()
-                                         .strip(chars = {'\"'}))
-
-      saveJson(fileName, jsonResp)
-      apodURL = $jsonResp["hdurl"].getStr()
-
-    redirect apodURL
+    resp apodPage()
 
