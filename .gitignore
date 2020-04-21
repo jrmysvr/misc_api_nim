@@ -7,3 +7,6 @@ tester*
 
 # Saved fetches
 *.json
+
+# nimcache
+build/

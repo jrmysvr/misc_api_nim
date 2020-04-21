@@ -14,4 +14,8 @@ bin           = @["api"]
 requires "nim >= 1.0.6", "jester"
 
 task serve, "Run the API server":
-    exec "nimble run -d:ssl api.nimble"
+  exec "nimble run -d:ssl api.nimble"
+
+task rpi, "Building for a raspberry pi":
+  exec "nim c -d:ssl src/api_raspberry.nim"
+  exec "rsync src/api_raspberry pi@192.168.1.101:~/misc_api_nim"
