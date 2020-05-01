@@ -6,6 +6,7 @@ import strutils
 import json
 import streams
 import os
+import strformat
 
 # Pass API Key to api.nasa.gov as command line argument
 let KEY = paramStr(1)
@@ -94,7 +95,18 @@ proc apodPage() : string =
                 )
           )
 
+proc variablesProc() : string =
+  result = html(body(
+                  p(fmt"APOD URL: {apodURL}"),
+                  p(fmt"FETCH DATE: {fetchDate}"),
+                  p(fmt"FNAME TODAY: {fnameToday}"),
+               )
+           )
+
 routes:
   get "/api/apod":
     resp apodPage()
+
+  get "/api/variables":
+    resp variablesProc()
 
