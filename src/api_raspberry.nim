@@ -30,17 +30,23 @@ proc openJson(fileName: string) : JsonNode =
   result = parseJson(strm)
   strm.close()
 
+proc defaultURL() : string =
+  var
+    defaultURLFile = "URL.txt"
+    strm = newFileStream(defaultURLFile, fmRead)
+
+  discard strm.readLine(result)
+
 
 # APOD endpoint
 const dateFormat = "yyyy-MM-dd"
 var
-  apodURL = ""
+  apodURL = defaultURL()
   fetchDate = now() - 1.years
   fnameToday = ""
 
 proc fetchAPOD() : string =
   ## Fetch the Astronomy Picture of the Day url
-
   let
     today = parse(now().format(dateFormat), dateFormat)
     fetched = today == fetchDate
@@ -56,10 +62,10 @@ proc fetchAPOD() : string =
     fnameToday = fileName
 
     saveJson(fnameToday, jsonResp)
-    result = jsonResp["hdurl"].getStr()
+    let url = jsonResp["hdurl"].getStr()
+    apodURL = if url.isEmptyOrWhitespace(): jsonResp["url"].getStr() else: url
 
-  else:
-    result = apodURL
+  result = apodURL
 
 proc getAPODexplanation() : string =
   ## Get the explanation text of the Astronomy Picture of the Day
