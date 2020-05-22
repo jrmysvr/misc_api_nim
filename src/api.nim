@@ -21,6 +21,11 @@ proc getAPOD(): JsonNode =
 
   jsonResp
 
+proc saveToFile(fileName: string, stuff: string) =
+  var strm = newFileStream(fileName, fmWrite)
+  strm.writeLine(stuff)
+  strm.close()
+
 proc saveJson(fileName: string, obj: JsonNode) =
   var strm = newFileStream(fileName, fmWrite)
   strm.writeLine(obj)
@@ -103,10 +108,34 @@ proc variablesProc() : string =
                )
            )
 
+proc getJokeOfTheDay() : string =
+  let
+    url = "https://api.jokes.one/jod"
+    client = newHttpClient()
+    resp = client.get(url)
+    jsonResp = parseJson(resp.body())
+    success = jsonResp["success"]
+    contents = jsonResp["contents"]
+    joke = contents["jokes"][0]["joke"]["text"].getStr()
+
+  echo success
+  echo contents
+  result = joke.replace("\r\n", "\n")
+
+proc jokePage() : string =
+  result = html(body(
+                  p(fmt"The Joke of The Day: "),
+                  p(getJokeOfTheDay()),
+                  p("Credit: jokes.one")
+               )
+           )
+
 routes:
   get "/api/apod":
     resp apodPage()
 
+  get "/api/joke":
+    resp jokePage()
+
   get "/api/variables":
     resp variablesProc()
-
